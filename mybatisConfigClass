@@ -1,0 +1,90 @@
+/*
+1. annotations
+@Configuration
+@ConfigurationProperties
+@Bean(name of bean )
+Todo
+after adding the mybatis starter dependency to the pom file
+1. define the names of the beans (constants)
+    - dataSource
+    - transactionManager
+    - sqlSession factory
+ 2. define the location of the Dao(@Repository) interface
+ 3. define the path of the cong xml file
+ 4. define the mapperScanner bean
+ 5. define the named beans
+  */
+@Configuration
+@ConfigurationProperties
+public class MyBatisDataSourceConfig {
+    // define the bean names, dao and config file locations
+
+    private static final String SUBMIT_ACISS_RESPONSE_PREFIX = "app.submitAcissResponse.datasource";
+    private static final String SUBMIT_ACISS_RESPONSE_DATA_SOURCE_BEAN = "submitAcissResponseDataSource";
+    private static final String SUBMIT_ACISS_RESPONSE_TRANSATION_MANAGER ="submitAcissResponse_TX_Manager";
+    private static final String SUBMIT_ACISS_RESPONSE_DAO_BASE ="gov.mass.dcjis.dao.submitAcissResponse";
+    private static final String SUBMIT_ACISS_RESPONSE_SESSION_FACTORY_BEAN="submitAcissResponseSessionFactory";
+    private static final String SUBMIT_ACISS_RESPONSE_CONFIG="mybatis/submitAcissResponse-mybatis-config.xml";
+
+    /* define the dataSource bean connection
+    @Bean(bean name)
+    @ConfigurationProperties(prefixName)
+    type of dataSource - HikariDataSource
+     */
+     @Bean(SUBMIT_ACISS_RESPONSE_DATA_SOURCE_BEAN)
+     @ConfigurationProperties(SUBMIT_ACISS_RESPONSE_PREFIX)
+    public HikariDataSource submitAcissResponseDataSource(){
+        return DataSourceBuilder.create().type(HikariDataSource.class).build();
+    }
+    /* 
+    define the mapperScanner bean configuration
+    @Bean
+     */
+    @Bean
+    public MapperScannerConfigurer submitAcissResponseMapperScannerConfiguretion(){
+         // create instance of the mapperScannerConfigurer
+         MapperScannerConfigurer configurer = new MapperScannerConfigurer();
+         // set the basePackage(daoLocation)
+        configurer.setBasePackage(SUBMIT_ACISS_RESPONSE_DAO_BASE);
+        //set the sqlSessionFactory(sessionFactoryName)
+        configurer.setSqlSessionFactoryBeanName(SUBMIT_ACISS_RESPONSE_SESSION_FACTORY_BEAN);
+        // return  configure
+        return configurer;
+
+    }
+    
+    /* 
+    define the sqlSessionFactoryBean
+    @Bean(sessionFactoryName)
+    @params @Qualifier(dataSourceBeanName),  dataSource
+     */
+    @Bean(SUBMIT_ACISS_RESPONSE_SESSION_FACTORY_BEAN)
+    public SqlSessionFactoryBean submitAcissResponseManagementSessionFactoryBean(
+            @Qualifier(SUBMIT_ACISS_RESPONSE_DATA_SOURCE_BEAN)DataSource dataSource){
+        // create sqlSessionFactory instance
+        SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
+        // set DataSource
+        sqlSessionFactoryBean.setDataSource(dataSource);
+        // set TransactionFactory(new)
+        sqlSessionFactoryBean.setTransactionFactory(new SpringManagedTransactionFactory());
+        // setConfigLocation(newClassPathResource(configLocation))
+        sqlSessionFactoryBean.setConfigLocation(new ClassPathResource(SUBMIT_ACISS_RESPONSE_CONFIG));
+        // return sqlSessionFactoryBean 
+         return sqlSessionFactoryBean;
+    }
+    /*
+    define DataSourceTransactionManager
+    @Bean(TX_manager name)
+     @params @Qualifier(dataSourceBeanName),  dataSource
+     */
+    public DataSourceTransactionManager submitAcissResponseManagementDataSourceTransactionManager(
+            @Qualifier(SUBMIT_ACISS_RESPONSE_DATA_SOURCE_BEAN)DataSource dataSource){
+        // transaction manager instance
+        final DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
+        // set DataSource
+        dataSourceTransactionManager.setDataSource(dataSource);
+        
+        return dataSourceTransactionManager;        
+    }
+
+}
